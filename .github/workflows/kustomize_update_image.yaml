@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: checkout source code
         uses: actions/checkout@v4
-      - name: update kubernetes manifest
+      - name: update kustomize
         run: |
           #!/bin/sh
 
@@ -52,3 +52,17 @@ jobs:
           framework: kustomize
           check: CKV_K8S_21,CKV_K8S_10,CKV_K8S_11,CKV_K8S_12,CKV_K8S_8,CKV_K8S_9
           directory: kustomize/overlays/dev
+
+      - name: commit kustomize change
+        run: |
+          #!/bin/sh
+
+          set -e
+
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions - update submodules"
+
+          git checkout -b chore/update_container_image
+          git add --all
+          git commit -m "update container image tag ${{ needs.get-version.outputs.version-tag }}"
+          git push -u origin chore/update_container_image
