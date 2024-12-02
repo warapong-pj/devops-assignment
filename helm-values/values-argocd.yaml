@@ -1,0 +1,45 @@
+crds:
+  # -- Keep CRDs on chart uninstall
+  keep: false
+
+## Server
+server:
+  extensions:
+    # -- Enable support for Argo UI extensions
+    enabled: true
+
+    # -- Extensions for Argo CD
+    # @default -- `[]` (See [values.yaml])
+    ## Ref: https://github.com/argoproj-labs/argocd-extension-metrics#install-ui-extension
+    extensionList:
+    - name: argo-rollouts
+      env:
+        - name: EXTENSION_URL
+          value: https://github.com/argoproj-labs/rollout-extension/releases/download/v0.3.4/extension.tar
+
+
+  metrics:
+    enabled: false
+    service:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /metrics
+        prometheus.io/port: "8083"
+
+controller:
+  metrics:
+    enabled: false
+    service:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /metrics
+        prometheus.io/port: "8082"
+
+repoServer:
+  metrics:
+    enabled: false
+    service:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /metrics
+        prometheus.io/port: "8084"
