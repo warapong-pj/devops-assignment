@@ -8,5 +8,4 @@ resources:
 
 images:
 - name: warapongpj/sample-app
-  newName: warapongpj/sample-app
-  newTag: latest
+  newTag: 40df8c6
