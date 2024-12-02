@@ -1,0 +1,68 @@
+name: kustomize update container image
+
+on:
+  push:
+    branches:
+      - feat/add_kustomize
+
+jobs:
+  get-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout source code
+        uses: actions/checkout@v4
+      - name: set short commit sha
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+    outputs:
+      version-tag: ${{ steps.vars.outputs.sha_short }}
+
+  kustomize-update-container-image:
+    needs: get-version
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout source code
+        uses: actions/checkout@v4
+      - name: update kustomize
+        run: |
+          #!/bin/sh
+
+          set -e
+
+          if ! command -v kustomize &> /dev/null
+          then
+              curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+          fi
+
+          APP_DIR="kustomize/overlays/dev"
+
+          if [ ! -d $APP_DIR ]
+          then
+            echo "directory doesn't existing"
+            exit 1
+          fi
+
+          cd $APP_DIR
+          kustomize edit set image warapongpj/sample-app:${{ needs.get-version.outputs.version-tag }}
+          kustomize build
+
+      - name: check kubernetes manifest policy
+        uses: bridgecrewio/checkov-action@master
+        with:
+          framework: kustomize
+          check: CKV_K8S_21,CKV_K8S_10,CKV_K8S_11,CKV_K8S_12,CKV_K8S_8,CKV_K8S_9
+          directory: kustomize/overlays/dev
+
+      - name: commit kustomize change
+        run: |
+          #!/bin/sh
+
+          set -e
+
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions - update submodules"
+
+          git checkout -b chore/update_container_image
+          git add --all
+          git commit -m "update container image tag ${{ needs.get-version.outputs.version-tag }}"
+          git push -u origin chore/update_container_image
